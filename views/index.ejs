@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Note Management</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    
+    <div class="main-container">
+    <div class="left-section">
+    <!-- Search Form -->
+     <div class="box">
+    <div class="search-form">
+      <form action="/" method="GET">
+        <input
+          type="text"
+          name="search"
+          placeholder="Search Notes"
+          value="<%= searchQuery.trim() %>"
+        />
+        <button type="submit">Search</button>
+      </form>
+    </div>
+
+   
+    
+    
+    
+    <!-- Categories (Dropdown) -->
+        <div class="categories">
+          <form action="/" method="GET">
+            <select name="categories" id="categories">
+              <option value="">Select Category</option>
+              <% categories.forEach(function(category) { %>
+                <option value="<%= category %>" <%= searchQuery === category ? "selected" : "" %>><%= category %></option>
+              <% }); %>
+            </select>
+            <button type="submit">Filter</button>
+          </form>
+        </div>
+
+
+        <!-- Create Category Form -->
+        <div class="create-category-form">
+          <form action="/category" method="POST">
+            <input
+              type="text"
+              name="name"
+              placeholder="Enter Category"
+              required
+            />
+            <button type="submit">Create Category</button>
+          </form>
+        </div>
+</div>
+
+<div class="box">
+        <h2>Categories</h2>
+        <ul>
+          <% categories.forEach(function(category) { %>
+            <li>
+              <%= category %> 
+              <form action="/delete-category/<%= category %>" method="POST" style="display:inline;">
+                <button type="submit" class="delete-btn">Delete</button>
+              </form>
+            </li>
+          <% }); %>
+        </ul>
+    </div>
+  </div>
+    <!-- Notes Container -->
+     <div class="right-section">
+      <h1>Manage Notes</h1>
+      <div class="btn-container">
+      <a href="/new" class="btn">➕ Add New Note</a>
+    </div>
+      
+    <div class="notes-container">
+      <% notes.forEach(note => { %>
+        <div
+          class="note"
+          style="background-color: <%= note.color %>"
+          onclick="openNote('<%= note.id %>')"
+        >
+          <h3><%= note.title %></h3>
+          <div class="note-category" style="position: absolute; top: 10px; right: 10px; background-color: rgba(0, 0, 0, 0.5); color: white; padding: 5px;">
+    <%= note.category %>
+  </div>
+          <p><%= note.content %></p>
+
+          <div class="buttons">
+            <form action="/pin/<%= note.id %>" method="POST" onsubmit="event.stopPropagation();">
+              <button type="submit" onclick="event.stopPropagation();">
+                <%= note.pinned ? "📍 Unpin" : "📌 Pin" %>
+              </button>
+            </form>
+
+            <a href="/edit/<%= note.id %>" onclick="event.stopPropagation();">✏️ Edit</a>
+
+            <form action="/delete/<%= note.id %>" method="POST" onsubmit="event.stopPropagation();">
+              <button type="submit" onclick="event.stopPropagation();">🗑 Delete</button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- Full Page Modal for Viewing Note -->
+    <div id="noteModal" class="note-modal">
+      <div class="note-modal-content">
+        <span id="closeModal" class="close">&times;</span>
+        <div id="modalNoteContent">
+          <!-- Content will be injected dynamically via JS -->
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+    <script>
+      // Function to open a note and show its content in the full-page modal
+      function openNote(noteId) {
+        // Make an AJAX request to fetch the note content by ID
+        fetch(`/note/${noteId}`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Note not found');
+            }
+            return response.json();
+          })
+          .then((data) => {
+            const modal = document.getElementById("noteModal");
+            const modalContent = document.getElementById("modalNoteContent");
+
+            // Inject the note content into the modal
+            modalContent.innerHTML = `
+              <h3>${data.title}</h3>
+              <p>${data.content}</p>
+            `;
+
+            // Display the modal
+            modal.style.display = "block"; // Show modal
+            console.log("Note data loaded:", data);
+          })
+          .catch((error) => {
+            console.error("Error fetching note:", error);
+          });
+      }
+
+      // Function to close the modal
+      function closeModal() {
+        const modal = document.getElementById("noteModal");
+        modal.style.display = "none";
+      }
+
+      // Close the modal when the close button is clicked
+      document.getElementById("closeModal").onclick = closeModal;
+
+      // Close the modal if the user clicks anywhere outside the modal
+      window.onclick = function (event) {
+        const modal = document.getElementById("noteModal");
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+    </script>
+
+  </body>
+</html>
